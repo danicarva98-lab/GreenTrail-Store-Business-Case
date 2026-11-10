@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GreenTrail Promotion Performance Dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+:root{--ink:#17231D;--mute:#4A5A52;--line:#DCE3DD;--g:#0B5D4B;--bg:#F4F6F3;--red:#B3261E}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:var(--ink)}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid #2B6CB0;outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto;padding:32px 40px 56px;display:flex;flex-direction:column;gap:24px}
+h1,h2,.num{font-family:'Space Grotesk',sans-serif}
+h1{margin:0;font-size:36px;color:#0B3D2E}
+h2{margin:16px 0 4px;font-size:24px;color:#0B3D2E}
+.sub{font-size:14px;color:var(--mute)}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px 24px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:16px}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{min-height:44px;padding:0 18px;border-radius:22px;font-weight:600;font-size:14px;border:1px solid var(--g);background:#fff;color:var(--g)}
+.pill.on{background:var(--g);color:#fff}
+.lbl{font-size:12px;font-weight:600;color:var(--mute);margin-bottom:8px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.kpi .v{font-size:34px;font-weight:700;margin-top:6px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 18px;font-size:13px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.plot{position:relative;height:260px}
+.plot .cols{position:absolute;inset:0;display:flex}
+.grp{flex:1;display:flex;gap:6px;position:relative}
+.col{flex:1;position:relative}
+.bar{position:absolute;left:8%;right:8%;border-radius:3px}
+.bl{position:absolute;left:-10%;right:-10%;text-align:center;font-size:12px;font-weight:600}
+.zero{position:absolute;left:0;right:0;height:1px;background:#8A9A91}
+.names{display:flex;margin-top:8px}
+.names div{flex:1;text-align:center;font-weight:600;font-size:14px}
+.insight{margin-top:16px;padding:12px 14px;background:#EEF5F0;border-radius:8px;font-size:14px;line-height:1.5}
+.donut{width:200px;height:200px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:24px auto}
+.donut div{width:120px;height:120px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dl{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px;border-top:1px solid #EEF1EE}
+.dl i{width:12px;height:12px;border-radius:3px}
+.dl span{flex:1}
+table{width:100%;min-width:820px;border-collapse:collapse;font-size:14px}
+th{text-align:left;background:var(--bg);padding:10px 12px}
+td{padding:10px 12px;border-top:1px solid #EEF1EE}
+th button{border:0;background:none;font-weight:600;font-size:14px;padding:0;min-height:32px}
+.r{text-align:right}
+.d{display:inline-block;padding:3px 10px;border-radius:6px;font-weight:600}
+@media(max-width:640px){.wrap{padding:20px 16px}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px">
+<div><div class="sub">GreenTrail: 25 stores, promotions from April to August 2023</div>
+<h1>Store Performance &amp; Promotion Dashboard</h1></div>
+<button class="pill" id="reset">Reset filters</button>
+</div>
+
+<div class="card" style="display:flex;flex-wrap:wrap;gap:20px 40px">
+<div><div class="lbl">Store type</div><div class="pills" id="fFmt"></div></div>
+<div><div class="lbl">Promotion type</div><div class="pills" id="fPromo"></div></div>
+<div><div class="lbl">Promotion start month (2023)</div><div class="pills" id="fMonth"></div></div>
+</div>
+
+<div class="kpis" id="kpis"></div>
+
+<div><h2>A. Performance by Promotion Type</h2><div class="sub">Which campaign works best?</div></div>
+<div class="row">
+<div class="card" style="flex:999 1 560px">
+<b>Sales uplift vs. post-promotion delta, by promotion type</b>
+<div class="legend" id="legA"></div>
+<div class="plot" id="plotA"></div><div class="names" id="namesA" style="gap:28px"></div>
+<div class="insight" id="insA"></div>
+</div>
+<div class="card" style="flex:1 1 300px">
+<b>Store distribution by promotion type</b>
+<div class="donut" id="donut"><div><span class="num" id="dn" style="font-size:34px;font-weight:700"></span><span class="sub">stores</span></div></div>
+<div id="dleg"></div>
+</div>
+</div>
+
+<div><h2>B. Performance by Store Format</h2><div class="sub">Urban vs. Suburban</div></div>
+<div class="card">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center">
+<b>Urban vs. Suburban by promotion type</b><div class="pills" id="fMetric"></div></div>
+<div class="legend" id="legB" style="margin-top:12px"></div>
+<div class="plot" id="plotB"></div><div class="names" id="namesB" style="gap:64px;padding:0 5%"></div>
+<div class="insight" id="insB"></div>
+</div>
+
+<div class="card">
+<b>Store detail</b>
+<div class="sub" style="margin:4px 0 12px">Post-promotion delta = weekly sales after vs. before the promotion. Negative values are red. Click a column header to sort.</div>
+<div style="overflow-x:auto"><table>
+<thead><tr>
+<th><button data-k="id">Store ID<span></span></button></th><th>Location</th><th>Store Type</th><th>Promotion</th>
+<th class="r"><button data-k="bef">Weekly Sales Before<span></span></button></th>
+<th class="r"><button data-k="dur">Weekly Sales During<span></span></button></th>
+<th class="r"><button data-k="delta">Delta Post-Promotion<span></span></button></th>
+</tr></thead><tbody id="tbody"></tbody></table></div>
+</div>
+</div>
+
+<script>
+const RAW=[
+['001','New York','Urban','Discount','06',50000,30000,35000,400,300,350],
+['002','Los Angeles','Suburban','Buy-One-Get-One','05',45000,35000,30000,450,400,375],
+['003','Chicago','Urban','Special Event','07',60000,40000,40000,500,350,450],
+['004','Houston','Suburban','Discount','06',48000,32000,33000,425,310,320],
+['005','Phoenix','Urban','Buy-One-Get-One','04',53000,34000,36000,475,350,370],
+['006','Philadelphia','Urban','Special Event','08',49000,31000,41000,480,300,400],
+['007','San Antonio','Suburban','Discount','07',42000,39000,37000,350,340,360],
+['008','San Diego','Urban','Buy-One-Get-One','06',56000,43000,39000,530,420,410],
+['009','Dallas','Suburban','Special Event','05',47000,36000,38000,420,365,380],
+['010','San Jose','Urban','Discount','04',52000,33000,41000,500,320,390],
+['011','Austin','Suburban','Buy-One-Get-One','08',45000,37000,34000,410,370,350],
+['012','Jacksonville','Urban','Special Event','07',51000,38000,42000,470,360,410],
+['013','Fort Worth','Suburban','Discount','06',43000,35000,36000,400,340,350],
+['014','Columbus','Urban','Buy-One-Get-One','05',55000,41000,45000,520,400,430],
+['015','Charlotte','Suburban','Special Event','04',46000,34000,37000,415,335,360],
+['016','Detroit','Urban','Discount','08',58000,44000,42000,540,430,420],
+['017','El Paso','Suburban','Buy-One-Get-One','07',44000,42000,40000,390,380,370],
+['018','Memphis','Urban','Special Event','06',47000,35000,39000,410,330,380],
+['019','Baltimore','Suburban','Discount','05',49000,37000,36000,420,360,350],
+['020','Boston','Urban','Buy-One-Get-One','04',54000,40000,41000,510,390,400],
+['021','Nashville','Suburban','Special Event','08',45000,33000,35000,400,320,330],
+['022','Denver','Urban','Discount','07',50000,39000,42000,480,370,400],
+['023','Louisville','Suburban','Buy-One-Get-One','06',48000,36000,37000,410,350,360],
+['024','Portland','Urban','Special Event','05',52000,41000,43000,470,400,420],
+['025','Milwaukee','Suburban','Discount','04',47000,35000,38000,400,340,370]
+].map(r=>({id:r[0],loc:r[1],type:r[2],promo:r[3],m:r[4],dur:r[5],bef:r[6],aft:r[7],vb:r[9],va:r[10]}));
+const PROMOS=['Discount','Buy-One-Get-One','Special Event'];
+const PCOL={'Discount':'#2B6CB0','Buy-One-Get-One':'#D9822B','Special Event':'#0B5D4B'};
+const MCOL=['#0B3D2E','#7BB662','#C86B1E'];
+const MONTHS=[['all','All'],['04','Apr'],['05','May'],['06','Jun'],['07','Jul'],['08','Aug']];
+const up=x=>x.dur/x.bef-1, ps=x=>x.aft/x.bef-1, pv=x=>x.va/x.vb-1;
+const avg=(a,f)=>a.length?a.reduce((s,x)=>s+f(x),0)/a.length:0;
+const pct=v=>(v>=0?'+':'')+(v*100).toFixed(1)+'%';
+const $=id=>document.getElementById(id);
+const S={fmt:'All',promo:'All',month:'all',metric:'ps',sort:'id',dir:1};
+
+function pills(el,opts,key){
+  $(el).innerHTML=opts.map(o=>`<button class="pill${S[key]===o[0]?' on':''}" data-v="${o[0]}">${o[1]}</button>`).join('');
+  $(el).querySelectorAll('button').forEach(b=>b.onclick=()=>{S[key]=b.dataset.v;render()});
+}
+function chart(plot,names,groups,gap,pad){
+  const vals=[];groups.forEach(g=>g.bars.forEach(b=>{if(b.v!==null)vals.push(b.v)}));
+  const H=260,lo=Math.min(0,...vals)-0.03,hi=Math.max(0.05,...vals)+0.06,r=hi-lo,z=hi/r*H;
+  $(plot).innerHTML=`<div class="zero" style="top:${z}px"></div><div class="cols" style="gap:${gap}px;padding:${pad}">`+
+    groups.map(g=>`<div class="grp" style="gap:${gap>40?8:6}px">`+g.bars.map(b=>{
+      const v=b.v||0,h=Math.abs(v)/r*H,t=v>=0?z-h:z;
+      return `<div class="col"><div class="bar" style="top:${t}px;height:${Math.max(h,2)}px;background:${b.c}"></div>`+
+      `<div class="bl" style="top:${v>=0?t-18:t+h+3}px">${b.v===null?'–':pct(b.v)}</div></div>`}).join('')+`</div>`).join('')+`</div>`;
+  $(names).innerHTML=groups.map(g=>`<div>${g.name}</div>`).join('');
+}
+function legend(el,items){$(el).innerHTML=items.map(i=>`<span><i style="background:${i[1]}"></i>${i[0]}</span>`).join('')}
+
+function render(){
+  pills('fFmt',[['All','All'],['Urban','Urban'],['Suburban','Suburban']],'fmt');
+  pills('fPromo',[['All','All'],...PROMOS.map(p=>[p,p])],'promo');
+  pills('fMonth',MONTHS,'month');
+  pills('fMetric',[['up','Sales Uplift (During)'],['ps','Sales Delta (Post)'],['pv','Visits Delta (Post)']],'metric');
+  const rows=RAW.filter(x=>(S.fmt==='All'||x.type===S.fmt)&&(S.promo==='All'||x.promo===S.promo)&&(S.month==='all'||x.m===S.month));
+  const n=rows.length, col=v=>v<0?'var(--red)':'var(--g)';
+  $('kpis').innerHTML=[['Stores in view',String(n),'var(--ink)'],
+    ['Avg sales uplift (during)',n?pct(avg(rows,up)):'–','var(--g)'],
+    ['Avg sales delta (post)',n?pct(avg(rows,ps)):'–',col(avg(rows,ps))],
+    ['Avg visits delta (post)',n?pct(avg(rows,pv)):'–',col(avg(rows,pv))]]
+    .map(k=>`<div class="card kpi"><div class="lbl" style="margin:0">${k[0]}</div><div class="v num" style="color:${k[2]}">${k[1]}</div></div>`).join('');
+
+  legend('legA',[['% Sales Uplift (During)',MCOL[0]],['% Sales Delta (Post)',MCOL[1]],['% Visits Delta (Post)',MCOL[2]]]);
+  const pa=p=>rows.filter(x=>x.promo===p);
+  chart('plotA','namesA',PROMOS.map(p=>{const a=pa(p),e=!a.length;return{name:p,bars:[
+    {v:e?null:avg(a,up),c:MCOL[0]},{v:e?null:avg(a,ps),c:MCOL[1]},{v:e?null:avg(a,pv),c:MCOL[2]}]}}),28,'0');
+  const bg=pa('Buy-One-Get-One'),se=pa('Special Event');
+  $('insA').textContent=(bg.length&&se.length)?
+    `BOGO drops after the promotion (${pct(avg(bg,ps))} sales, ${pct(avg(bg,pv))} visits), while Special Events sustain growth (${pct(avg(se,ps))} sales, ${pct(avg(se,pv))} visits).`:
+    'Select all promotion types to compare BOGO against Special Events.';
+
+  let acc=0;const parts=[];
+  $('dleg').innerHTML=PROMOS.map(p=>{const c=pa(p).length,f=acc/Math.max(n,1)*100;acc+=c;
+    parts.push(`${PCOL[p]} ${f}% ${acc/Math.max(n,1)*100}%`);
+    return `<div class="dl"><i style="background:${PCOL[p]}"></i><span>${p}</span><b>${c}</b><span class="sub" style="flex:0 0 48px;text-align:right">${n?Math.round(c/n*100)+'%':'–'}</span></div>`}).join('');
+  $('donut').style.background=n?`conic-gradient(${parts.join(',')})`:'#E3E8E4';
+  $('dn').textContent=n;$('dn').style.display='block';
+
+  const mf={up,ps,pv}[S.metric];
+  legend('legB',PROMOS.map(p=>[p,PCOL[p]]));
+  chart('plotB','namesB',['Urban','Suburban'].map(f=>({name:f+' stores',bars:PROMOS.map(p=>{
+    const a=rows.filter(x=>x.type===f&&x.promo===p);return{v:a.length?avg(a,mf):null,c:PCOL[p]}})})),64,'0 5%');
+  const sev=f=>{const a=RAW.filter(x=>x.type===f&&x.promo==='Special Event'&&(S.month==='all'||x.m===S.month));return a.length?avg(a,ps):null};
+  const u=sev('Urban'),s=sev('Suburban');
+  $('insB').textContent=(u!==null&&s!==null)?
+    `Urban stores respond better to Special Events: ${pct(u)} post-promotion sales vs. ${pct(s)} in Suburban stores.`:
+    'The Urban vs. Suburban Special Event comparison needs both formats with Special Event data in the selected month.';
+
+  const key={id:x=>x.id,bef:x=>x.bef,dur:x=>x.dur,delta:ps}[S.sort];
+  rows.sort((a,b)=>(key(a)>key(b)?1:key(a)<key(b)?-1:0)*S.dir);
+  $('tbody').innerHTML=rows.map(x=>{const d=ps(x);
+    const st=d<0?'color:#B3261E;background:#FDECEA':d>0?'color:#146C43;background:#E8F5EE':'color:#4A5A52;background:#EEF1EE';
+    return `<tr><td>${x.id}</td><td>${x.loc}</td><td>${x.type}</td><td>${x.promo}</td><td class="r">${x.bef.toLocaleString('en-US')}</td><td class="r">${x.dur.toLocaleString('en-US')}</td><td class="r"><span class="d" style="${st}">${pct(d)}</span></td></tr>`}).join('');
+  document.querySelectorAll('th button').forEach(b=>b.querySelector('span').textContent=S.sort===b.dataset.k?(S.dir===1?' ▲':' ▼'):'');
+}
+document.querySelectorAll('th button').forEach(b=>b.onclick=()=>{S.dir=S.sort===b.dataset.k?-S.dir:1;S.sort=b.dataset.k;render()});
+$('reset').onclick=()=>{S.fmt='All';S.promo='All';S.month='all';render()};
+render();
+</script>
+</body>
+</html>
